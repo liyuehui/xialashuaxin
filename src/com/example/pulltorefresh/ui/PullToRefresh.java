@@ -7,7 +7,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -64,7 +63,6 @@ public class PullToRefresh extends LinearLayout {
 				}
 			}
 		});
-//		mListView.setOnTouchListener(this);
 	}
 
 	public ListView getListView() {
@@ -72,23 +70,15 @@ public class PullToRefresh extends LinearLayout {
 	}
 
 	
-//	@Override
-//	public boolean dispatchTouchEvent(MotionEvent ev) {
-//		Log.e(TAG,TAG+" dispatchTouchEvent:");
-//		return true;
-//	}
-//	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 
-		Log.e(TAG,TAG+" onTouchEvent:");
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			mDownY = event.getRawY();
 			mCurState = RELEADE_REFRESH;// ÏÂÀ­Ë¢ÐÂ
-
 			Log.e(TAG, TAG + " mDownY:" + mDownY);
-
+			
 			break;
 
 		case MotionEvent.ACTION_MOVE:
@@ -102,6 +92,8 @@ public class PullToRefresh extends LinearLayout {
 			break;
 		case MotionEvent.ACTION_CANCEL:
 		case MotionEvent.ACTION_UP:
+			mCurState = PULL_REFRESH;
+			resetHeader();
 			if (mCurState == RELEADE_REFRESH) {
 				if (getTopMarginTop() >= 0) {
 					mCurState = REFRESHING;
@@ -112,9 +104,13 @@ public class PullToRefresh extends LinearLayout {
 				}
 			}
 			mDownY = 0;
+			Log.e(TAG, TAG + " ACTION_UP " +" is:"+ Boolean.valueOf(RELEADE_REFRESH == mCurState));
 			break;
 		}
 
+		if(RELEADE_REFRESH == mCurState){
+			return true;
+		}
 		// if (mCurState == REFRESHING) {
 		// return true;
 		// }
@@ -124,11 +120,37 @@ public class PullToRefresh extends LinearLayout {
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent event) {
 
-//		if (mCurState == PULL_REFRESH) {
-//			return true;
+		boolean intercept = false;
+		
+//		if(RELEADE_REFRESH == mCurState){
+//			Log.e(TAG, TAG + " RELEADE_REFRESH == mCurState");
 //		}
-		Log.e(TAG, TAG + " onInterceptTouchEvent:" );
-		return super.onInterceptTouchEvent(event);
+		
+//		Log.e(TAG, TAG + " onInterceptTouchEvent:"+ getTopMarginTop());
+		
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_MOVE:
+			Log.e(TAG, TAG + "ACTION_MOVE");
+			float dy = event.getRawY() - mDownY;
+			if (Math.abs(dy) > 0)   {
+				intercept = true;
+				
+			}else{
+				intercept = false;
+			}
+			break;
+		case MotionEvent.ACTION_DOWN:
+			mDownY = event.getRawY();
+			Log.e(TAG, TAG + "ACTION_DOWN");
+			if (getTopMarginTop() == -mHeaderHeight )  {
+				Log.e(TAG, TAG + "getTopMarginTop():"+getTopMarginTop());
+				
+			}
+			break;
+
+		}
+		Log.e(TAG, TAG+" intercept:"+intercept);
+		return intercept;
 	}
 
 	private int getTopMarginTop() {
